@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import Die from './Die';
+import { useState } from 'react';
+import { nanoid } from 'nanoid';
+import Confetti from "react-confetti"
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+
+  const [dice, setDice] = useState(() => generateAllNewDieValues());
+
+  const gameWon = dice.every(die => die.isHeld) &&
+        dice.every(die => die.value === dice[0].value)
+  console.log({gameWon})
+
+  
+
+
+  function generateAllNewDieValues(){
+    return new Array(10).fill().map(() => ({
+      id: nanoid(),
+      value: Math.floor(Math.random() * 6) + 1,
+      isHeld: false
+    }))
+  }
+
+  const toggleIsHeld = (id) => {
+    setDice(prevDice => prevDice.map(die => ((die.id === id) ? {...die, isHeld: !die.isHeld} : die)))
+
+  }
+
+  const rollDice = () => {
+    gameWon ? 
+    setDice(generateAllNewDieValues()) 
+    : setDice(prevDice => prevDice.map(die => (die.isHeld ? die : {...die, value: Math.floor(Math.random() * 6) + 1})))
+  }
+
+
+
+  
+
+  const dieElements = dice.map(dieState => (
+    <Die key={dieState.id} value={dieState.value} isHeld={dieState.isHeld} handleToggle={() => toggleIsHeld(dieState.id)}/>
+  ))
+
+
+
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <main className='game-container'>
+      {gameWon && <Confetti />}
+      <div aria-live="polite" className="sr-only">
+                {gameWon && <p>Congratulations! You won! Press "New Game" to start again.</p>}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+      <h1 className='title'>Tenzies</h1>
+      <p>Roll until all dice are the same. Click each die to freeze it at its current value between rolls</p>
+      <div className='dice-container'>{dieElements}</div>
+      <button onClick={rollDice} className='roll-button'>{ gameWon ? 'New Game' : 'Roll'}</button>
+    </main>
   )
+  
 }
-
-export default App
